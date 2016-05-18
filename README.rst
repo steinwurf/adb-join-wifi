@@ -1,7 +1,6 @@
-===========
-ADBJoinWifi
-===========
-
+=============
+adb-join-wifi
+=============
 A simple app for making it possible to join a certain wifi access point from ADB
 without requiring a rooted device.
 
@@ -10,7 +9,6 @@ without requiring a rooted device.
 
 Usage
 =====
-
 Build the app, either by importing the project into Android Studio or by using
 the following command (make sure you have set the ``ANDROID_HOME`` environment
 variable if you choose the latter)::
@@ -33,3 +31,7 @@ The password type should be either:
 
 * ``WPA``, or
 * ``WEP``
+
+License
+=======
+adb-join-wifi is available under the BSD license.
