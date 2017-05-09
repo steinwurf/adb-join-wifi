@@ -35,7 +35,8 @@ public class CheckSSIDBroadcastReceiver extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        WifiManager wifiManager = (WifiManager) context.getSystemService(
+
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(
                 AppCompatActivity.WIFI_SERVICE);
         if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION))
         {

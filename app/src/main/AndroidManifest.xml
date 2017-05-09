@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest package="com.steinwurf.adbjoinwifi"
           xmlns:android="http://schemas.android.com/apk/res/android">
-    <receiver android:name="com.steinwurf.adbjoinwifi.MainActivity$MyBroadcastReceiver" >
-        <intent-filter android:priority="100">
-            <action android:name="android.net.wifi.STATE_CHANGE" />
-        </intent-filter>
-    </receiver>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>

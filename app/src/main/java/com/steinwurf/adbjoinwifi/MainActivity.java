@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
 
         // Check if wifi is enabled, and act accordingly
 
-        mWifiManager = (WifiManager)getSystemService(WIFI_SERVICE);
+        mWifiManager = (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
 
 
         if (!mWifiManager.isWifiEnabled())
@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
             finish();
             return;
         }
-        final int final_networkId = networkId;
+        final int finalNetworkId = networkId;
 
         mThread = new Thread() {
             @Override
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
                     while(!isInterrupted())
                     {
                         Log.d(TAG, "Joining");
-                        mWifiManager.enableNetwork(final_networkId, true);
+                        mWifiManager.enableNetwork(finalNetworkId, true);
                         mWifiManager.reconnect();
                         // Wait and see if it worked. Otherwise try again.
                         sleep(10000);
