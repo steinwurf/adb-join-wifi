@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ADBJoinWifi</string>
+
+    <string name="trying_to_connect_to">Trying to connect to:</string>
 </resources>

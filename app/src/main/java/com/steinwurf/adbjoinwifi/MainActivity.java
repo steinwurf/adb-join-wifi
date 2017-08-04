@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 
         TextView textview = new TextView(this);
-        textview.setText("Trying to connect to:");
+        textview.setText(getString(R.string.trying_to_connect_to));
         textview.setTextSize(20);
         layout.addView(textview, params);
 
@@ -150,11 +150,13 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         if (mThread != null)
             return;
 
-        int networkId = checkIfSSIDExists();
+        int networkId = getNetworkId();
         if (networkId == -1)
         {
-            networkId = addWifiConfiguration(networkId);
+            // Wifi configuration didn't exist, create it.
+            networkId = addWifiConfiguration();
         }
+
         if (networkId == -1)
         {
             Log.d(TAG, "Invalid wifi network");
@@ -184,11 +186,11 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         mThread.start();
     }
 
-    private int addWifiConfiguration(int networkId)
+    private int addWifiConfiguration()
     {
         WifiConfiguration wfc = new WifiConfiguration();
         wfc.SSID = "\"".concat(mSSID).concat("\"");
-        wfc.status = WifiConfiguration.Status.DISABLED;
+        wfc.status = WifiConfiguration.Status.ENABLED;
         wfc.priority = 100;
         if (mPasswordType == null) // no password
         {
@@ -235,19 +237,13 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
 
             wfc.preSharedKey = "\"".concat(mPassword).concat("\"");
         }
-        int result = mWifiManager.addNetwork(wfc);
-        if (result  != -1)
-        {
-            networkId = result;
-        }
-        return networkId;
+        return mWifiManager.addNetwork(wfc);
     }
 
-    private int checkIfSSIDExists()
+    private int getNetworkId()
     {
         for( WifiConfiguration i : mWifiManager.getConfiguredNetworks())
         {
-
             if(i.SSID != null && i.SSID.equals("\"".concat(mSSID).concat("\"")))
             {
                 Log.d(TAG, "wifi network already exists.");
