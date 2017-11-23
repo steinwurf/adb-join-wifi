@@ -5,6 +5,8 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 public class AdminReceiver extends DeviceAdminReceiver
@@ -23,20 +25,5 @@ public class AdminReceiver extends DeviceAdminReceiver
     {
         Log.d(TAG, "AdminContextManager onDisabled");
         super.onDisabled(context, intent);
-    }
-
-    static boolean canEditWifi(Context c)
-    {
-        DevicePolicyManager dpm = (DevicePolicyManager) c.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        return dpm.isAdminActive(new ComponentName(c, AdminReceiver.class)) && dpm.isDeviceOwnerApp(c.getPackageName());
-    }
-
-    static void clearDeviceOwner(Context c)
-    {
-        if (canEditWifi(c))
-        {
-            DevicePolicyManager dpm = (DevicePolicyManager) c.getSystemService(Context.DEVICE_POLICY_SERVICE);
-            dpm.clearDeviceOwnerApp(c.getPackageName());
-        }
     }
 }
