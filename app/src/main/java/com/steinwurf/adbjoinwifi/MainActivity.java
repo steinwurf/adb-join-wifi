@@ -210,6 +210,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         {
             // Wifi configuration didn't exist for this SSID, create it.
             wfc = new WifiConfiguration();
+            updateWifiConfiguration(wfc);
             networkId = mWifiManager.addNetwork(wfc);
         }
         else if (permittedToUpdate(wfc))
