@@ -17,7 +17,7 @@ variable if you choose the latter)::
 
 Alternatively you can also just download the latest release::
 
-   wget https://github.com/steinwurf/adb-join-wifi/releases/download/1.0.0/adb-join-wifi.apk
+   wget https://github.com/steinwurf/adb-join-wifi/releases/download/1.0.1/adb-join-wifi.apk
 
 install the app::
 
