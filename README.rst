@@ -15,9 +15,13 @@ variable if you choose the latter)::
 
     ./gradlew assembleDebug
 
+Alternatively you can also just download the latest release::
+
+   wget https://github.com/steinwurf/adb-join-wifi/releases/download/1.0.0/adb-join-wifi.apk
+
 install the app::
 
-   adb install app/build/outputs/apk/app-debug.apk
+   adb install app/build/outputs/apk/debug/app-debug.apk
 
 Use the Activity Manager (``am``) to start the application with the appropriate
 parameters:
