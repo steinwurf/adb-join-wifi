@@ -74,7 +74,7 @@ public class Proxy {
         // This method is used since WifiConfiguration.setHttpProxy() isn't supported below sdk v.26
 
         // Code below adapted from
-        //   https://stackoverflow.com/questions/12486441/how-can-i-set-proxysettings-and-proxyproperties-on-android-wi-fi-connection-usin/33949339#33949339
+        //   https://stackoverflow.com/a/33949339/660982
         Class proxySettings = Class.forName("android.net.IpConfiguration$ProxySettings");
 
         Class[] setProxyParams = new Class[2];

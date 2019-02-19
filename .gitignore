@@ -19,6 +19,7 @@ local.properties
 .idea/tasks.xml
 .idea/.name
 .idea/compiler.xml
+.idea/gradle.xml
 .idea/copyright/profiles_settings.xml
 .idea/encodings.xml
 .idea/misc.xml
