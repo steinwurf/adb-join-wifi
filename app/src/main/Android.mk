@@ -21,7 +21,9 @@ LOCAL_SRC_FILES := $(call all-java-files-under, java)
 LOCAL_PACKAGE_NAME := AdbJoinWifi
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_USE_AAPT2 := true
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := 27
+LOCAL_SDK_RES_VERSION := current
+LOCAL_MIN_SDK_VERSION := 16
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     android-support-v7-appcompat \
