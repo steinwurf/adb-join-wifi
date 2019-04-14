@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.ProxyInfo;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,10 +29,13 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
 
     private static final String WEP_PASSWORD = "WEP";
     private static final String WPA_PASSWORD = "WPA";
+    private static final String PEAP_PASSWORD = "PEAP";
 
     private static final String SSID = "ssid";
     private static final String PASSWORD_TYPE = "password_type";
     private static final String PASSWORD = "password";
+
+    private static final String USERNAME = "username";
 
     private static final String PROXY_HOST = "proxy_host";
     private static final String PROXY_PORT = "proxy_port";
@@ -41,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
     private static final String CLEAR_DEVICE_ADMIN = "clear_device_admin";
 
     String mSSID;
+    String mUsername;
     String mPassword;
     String mPasswordType;
     ProxyInfo mProxyInfo;
@@ -95,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         mSSID = getIntent().getStringExtra(SSID);
         mPasswordType = getIntent().getStringExtra(PASSWORD_TYPE);
         mPassword = getIntent().getStringExtra(PASSWORD);
+        mUsername = getIntent().getStringExtra(USERNAME);
 
         String proxyHost = getIntent().getStringExtra(PROXY_HOST);
         String proxyPort = getIntent().getStringExtra(PROXY_PORT);
@@ -105,7 +111,8 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         if ((mSSID == null) || // SSID REQUIRED
             (mPasswordType != null && mPassword == null) || // PASSWORD REQUIRED IF PASSWORD TYPE GIVEN
             (mPassword != null && mPasswordType == null) || // PASSWORD TYPE REQUIRED IF PASSWORD GIVEN
-            (mPasswordType != null && !mPasswordType.equals(WPA_PASSWORD) && !mPasswordType.equals(WEP_PASSWORD))) // PASSWORD TYPE MUST BE NULL OR WPA OR WEP
+            (mPasswordType != null && !mPasswordType.equals(WPA_PASSWORD) && !mPasswordType.equals(WEP_PASSWORD)
+            && !mPasswordType.equals(PEAP_PASSWORD))) // PASSWORD TYPE MUST BE NULL OR WPA OR WEP
         {
             printUsage();
             return;
@@ -123,6 +130,11 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
 
         Log.d(TAG, "Trying to join:");
         Log.d(TAG, "SSID: " + mSSID);
+
+        if(mUsername != null)
+        {
+            Log.d(TAG, "Username: " + mUsername);
+        }
         if(mPasswordType != null && mPassword != null)
         {
             Log.d(TAG, "Password Type: " + mPasswordType);
@@ -330,6 +342,17 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
             wfc.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
 
             wfc.preSharedKey = "\"".concat(mPassword).concat("\"");
+        }
+        else if (mPasswordType.equals(PEAP_PASSWORD)) // PEAP
+        {
+            WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
+            wfc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_EAP);
+            wfc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.IEEE8021X);
+            enterpriseConfig.setIdentity(mUsername);
+            enterpriseConfig.setPassword(mPassword);
+            enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.PEAP);
+            enterpriseConfig.setPhase2Method(WifiEnterpriseConfig.Phase2.MSCHAPV2);
+            wfc.enterpriseConfig = enterpriseConfig;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
