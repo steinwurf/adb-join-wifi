@@ -73,3 +73,4 @@ build/
 
 #NDK
 obj/
+app-debug.sh
