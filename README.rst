@@ -33,21 +33,42 @@ To join a wifi network with no password::
 To join a password protected wifi network::
 
     adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
-        -e ssid SSID -e password_type WEP|WPA -e password PASSWORD
+        --esn connect -e ssid SSID -e password_type WEP|WPA -e password PASSWORD
+
+To join a 802.1x protected wifi network::
+
+    adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
+        --esn connect -e ssid SSID -e password_type PEAP -e username USERNAME -e password PASSWORD
+
+To join a wifi network and set a static ip address::
+
+    adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
+        --esn connect -e ssid SSID -e password_type WEP|WPA|PEAP [-e username USERNAME] -e password PASSWORD \
+        -e ip IP -e gateway GATEWAY --ei prefix PREFIX -e dns1 DNS1 -e dns2 DNS2
 
 To join a wifi network and set a static proxy (with optional bypass list)::
     
     adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
-        -e ssid SSID -e password_type WEP|WPA -e password PASSWORD \
+        --esn connect -e ssid SSID -e password_type WEP|WPA -e password PASSWORD \
         -e proxy_host HOSTNAME -e proxy_port PORT [-e proxy_bypass COMMA,SEPARATED,LIST]
 
 To join a wifi network and set a proxy auto-configuration URL::
     
     adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
-        -e ssid SSID -e password_type WEP|WPA -e password PASSWORD \
+        --esn connect -e ssid SSID -e password_type WEP|WPA -e password PASSWORD \
         -e proxy_pac_uri http://my.pac/url
 
 To clear proxy settings, simply join the same network again and do not pass proxy arguments.
+
+To remove a wifi network::
+
+    adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
+        --esn remove -e ssid SSID
+
+To remove all wifi network::
+
+    adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
+        --esn remove
 
 Modifying existing Wifi configurations
 =============================
@@ -64,7 +85,7 @@ can grant this app device owner privileges::
 This requires that your device has no provisioned accounts on it.
 If you wish to demote this app and remove its device owner privileges, run this::
 
-    adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity -e clear_device_admin true
+    adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity --esn clear_device_admin
 
 
 License

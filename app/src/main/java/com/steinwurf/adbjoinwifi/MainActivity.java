@@ -53,6 +53,8 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
     private static final String DNS2 = "dns2";
 
     private static final String CLEAR_DEVICE_ADMIN = "clear_device_admin";
+    private static final String CONNECT = "connect";
+    private static final String REMOVE = "remove";
 
     String mSSID;
     String mUsername;
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
 
     String mIP;
     String mGateway;
-    Integer mPrefix;
+    int mPrefix;
     String mDns1;
     String mDns2;
 
@@ -77,17 +79,23 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         Log.d(TAG,
                 "adb shell am start" +
                 " -n com.steinwurf.adbjoinwifi/.MainActivity " +
+                "-esn [connect|remove|clear_device_admin] " +
                 "-e ssid SSID " +
-                "-e password_type [WEP|WPA] " +
+                "-e password_type [WEP|WPA|PEAP] " +
+                "[-e username USERNAME] " +
                 "-e password PASSWORD " +
                 "\nOptional proxy args:\n" +
                 "    -e proxy_host HOSTNAME " +
                 "-e proxy_port PORT " +
                 "[-e proxy_bypass COMMA,SEPARATED,LIST]\n" +
                 "    OR\n" +
-                "    -e proxy_pac_uri http://my.proxy.config/url\n" +
-                "If app was granted device owner using dpm, you can unset it with:\n" +
-                "    -e clear_device_admin true");
+                "    -e proxy_pac_uri http://my.proxy.config/url" +
+                "\nOptional static adddress args:\n" +
+                "    -e ip IP " +
+                "-e gateway GATEWAY " +
+                "-ei prefix PREFIX " +
+                "-e dns1 DNS1 " +
+                "-e dns2 DNS2");
         Toast.makeText(this, "This application is meant to be used with ADB",
                 Toast.LENGTH_SHORT).show();
         finish();
@@ -98,9 +106,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
     {
         super.onCreate(savedInstanceState);
 
-        boolean clearDeviceAdmin = getIntent().getExtras() != null && getIntent().getExtras().containsKey(CLEAR_DEVICE_ADMIN);
-
-        if (clearDeviceAdmin) {
+        if (getIntent().hasExtra(CLEAR_DEVICE_ADMIN)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 clearDeviceOwner();
             }
@@ -125,46 +131,11 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
 
         mIP = getIntent().getStringExtra(IP);
         mGateway = getIntent().getStringExtra(GATEWAY);
-        mPrefix = Integer.parseInt(getIntent().getStringExtra(PREFIX));
+        mPrefix = getIntent().getIntExtra(PREFIX, 24);
         mDns1 = getIntent().getStringExtra(DNS1);
         mDns2 = getIntent().getStringExtra(DNS2);
 
-        // Validate
-        if ((mSSID == null) || // SSID REQUIRED
-            (mPasswordType != null && mPassword == null) || // PASSWORD REQUIRED IF PASSWORD TYPE GIVEN
-            (mPassword != null && mPasswordType == null) || // PASSWORD TYPE REQUIRED IF PASSWORD GIVEN
-            (mPasswordType != null && !mPasswordType.equals(WPA_PASSWORD) && !mPasswordType.equals(WEP_PASSWORD)
-            && !mPasswordType.equals(PEAP_PASSWORD))) // PASSWORD TYPE MUST BE NULL OR WPA OR WEP
-        {
-            printUsage();
-            return;
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            try {
-                mProxyInfo = Proxy.parseProxyInfo(proxyHost, proxyPort, proxyBypass, proxyPacUri);
-            } catch (ParseException e) {
-                Log.d(TAG, "Error parsing proxy settings");
-                printUsage();
-                return;
-            }
-        }
-
-        Log.d(TAG, "Trying to join:");
-        Log.d(TAG, "SSID: " + mSSID);
-
-        if(mUsername != null)
-        {
-            Log.d(TAG, "Username: " + mUsername);
-        }
-        if(mPasswordType != null && mPassword != null)
-        {
-            Log.d(TAG, "Password Type: " + mPasswordType);
-            Log.d(TAG, "Password: " + mPassword);
-        }
-
         // Setup layout
-
         LinearLayout layout = new LinearLayout(this);
         setContentView(layout);
 
@@ -174,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 
         TextView textview = new TextView(this);
-        textview.setText(getString(R.string.trying_to_connect_to));
+        textview.setText(getString(R.string.waiting));
         textview.setTextSize(20);
         layout.addView(textview, params);
 
@@ -182,23 +153,94 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         SSIDtextview.setText(mSSID);
         layout.addView(SSIDtextview, params);
 
-        // Setup broadcast receiver
-
-        broadcastReceiver = new CheckSSIDBroadcastReceiver(mSSID);
-        broadcastReceiver.setSSIDFoundListener(this);
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(broadcastReceiver, filter);
-
         // Check if wifi is enabled, and act accordingly
         mWifiManager = (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
 
         if (!mWifiManager.isWifiEnabled())
             mWifiManager.setWifiEnabled(true);
-        else
+
+        // Remove wifi config
+        if (getIntent().hasExtra(REMOVE)) {
+            if (mSSID != null){
+                WifiConfiguration wfc = getExistingWifiConfiguration();
+                if (wfc != null) {
+                    Log.d(TAG, "Trying to remove SSID: " + mSSID);
+                    textview.setText(R.string.trying_to_remove);
+                    mWifiManager.removeNetwork(wfc.networkId);
+                }
+                else {
+                    Log.d(TAG, "Not find this SSID: " + mSSID);
+                }
+            }
+            else {
+                Log.d(TAG, "Trying to remove all wifi config");
+                SSIDtextview.setText(R.string.all);
+                removeAllWifiConfig();
+            }
+            finish();
+            return;
+        }
+
+        // Connect to wifi
+        if (getIntent().hasExtra(CONNECT)) {
+
+            // Validate
+            if ((mSSID == null) || // SSID REQUIRED
+                    (mPasswordType != null && mPassword == null) || // PASSWORD REQUIRED IF PASSWORD TYPE GIVEN
+                    (mPassword != null && mPasswordType == null) || // PASSWORD TYPE REQUIRED IF PASSWORD GIVEN
+                    (mPasswordType != null && !mPasswordType.equals(WPA_PASSWORD) && !mPasswordType.equals(WEP_PASSWORD)
+                            && !mPasswordType.equals(PEAP_PASSWORD))) // PASSWORD TYPE MUST BE NULL OR WPA OR WEP
+            {
+                printUsage();
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                try {
+                    mProxyInfo = Proxy.parseProxyInfo(proxyHost, proxyPort, proxyBypass, proxyPacUri);
+                } catch (ParseException e) {
+                    Log.d(TAG, "Error parsing proxy settings");
+                    printUsage();
+                    return;
+                }
+            }
+
+            Log.d(TAG, "Trying to join:");
+            Log.d(TAG, "SSID: " + mSSID);
+
+            if(mUsername != null)
+            {
+                Log.d(TAG, "Username: " + mUsername);
+            }
+            if(mPasswordType != null && mPassword != null)
+            {
+                Log.d(TAG, "Password Type: " + mPasswordType);
+                Log.d(TAG, "Password: " + mPassword);
+            }
+            if (mIP != null)
+            {
+                Log.d(TAG, "Static ip: " + mIP);
+                Log.d(TAG, "Static gateway: " + mGateway);
+                Log.d(TAG, "Static prefix: " + mPrefix);
+                Log.d(TAG, "Static dns1: " + mDns1);
+                Log.d(TAG, "Static dns2: " + mDns2);
+            }
+            textview.setText(R.string.trying_to_connect_to);
+
+            // Setup broadcast receiver
+            broadcastReceiver = new CheckSSIDBroadcastReceiver(mSSID);
+            broadcastReceiver.setSSIDFoundListener(this);
+
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            registerReceiver(broadcastReceiver, filter);
+
+            // Set wifi config
             WifiEnabled();
+
+            return;
+        }
+        printUsage();
     }
 
     @Override
@@ -241,33 +283,12 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         int networkId;
 
         if (wfc != null)
-        {
-            Log.d(TAG, "Removing existing wifi config...");
-            removeWifi(wfc.networkId);
-        }
+            mWifiManager.removeNetwork(wfc.networkId);
 
         // Wifi configuration didn't exist for this SSID, create it.
         wfc = new WifiConfiguration();
         updateWifiConfiguration(wfc);
         networkId = mWifiManager.addNetwork(wfc);
-
-//        if (wfc == null)
-//        {
-//            // Wifi configuration didn't exist for this SSID, create it.
-//            wfc = new WifiConfiguration();
-//            updateWifiConfiguration(wfc);
-//            networkId = mWifiManager.addNetwork(wfc);
-//        }
-//        else if (permittedToUpdate(wfc))
-//        {
-//            // Wifi configuration already exists, update if we can
-//            updateWifiConfiguration(wfc);
-//            networkId = mWifiManager.updateNetwork(wfc);
-//        }
-//        else {
-//            // Wifi configuration already exists, we cannot update it so just join it
-//            networkId = wfc.networkId;
-//        }
 
         if (networkId == -1)
         {
@@ -376,7 +397,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
 
             wfc.preSharedKey = "\"".concat(mPassword).concat("\"");
         }
-        else if (mPasswordType.equals(PEAP_PASSWORD)) // PEAP
+        else if (mPasswordType.equals(PEAP_PASSWORD)) // 802.1x with PEAP
         {
             WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
             wfc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_EAP);
@@ -397,7 +418,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         }
 
         if (mIP != null) {
-            Log.d(TAG, "Setting static IP...");
+            Log.d(TAG, "Setting static ip address.");
             staticIpConfiguration(wfc);
         }
     }
@@ -415,22 +436,13 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         return null;
     }
 
-    // not used
-    private boolean removeWifi(int networkId) {
-        if (networkId == -1) {
-            Log.d(TAG, "Something went worng, N/W should value should not be -1 ");
-        }
-        return mWifiManager.removeNetwork(networkId);
-    }
-
-    // not used
     private void removeAllWifiConfig() {
         List<WifiConfiguration> confs = mWifiManager.getConfiguredNetworks();
         for (WifiConfiguration conf : confs) {
             String ssid = conf.SSID;
             int nwId = conf.networkId;
-            if (removeWifi(nwId)) {
-                Log.d(TAG, "Succesfully Remove N/W with name - " + ssid);
+            if (mWifiManager.removeNetwork(nwId)) {
+                Log.d(TAG, "Succesfully remove wifi-config with SSID: " + ssid);
             }
         }
     }
@@ -457,6 +469,7 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
     private void staticIpConfiguration(WifiConfiguration wfc) {
         try {
             Class<?> ipAssignment = wfc.getClass().getMethod("getIpAssignment").invoke(wfc).getClass();
