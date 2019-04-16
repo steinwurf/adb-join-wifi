@@ -28,7 +28,8 @@ parameters:
 
 To join a wifi network with no password::
 
-   adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity -e ssid SSID
+   adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity
+        --esn connect -e ssid SSID
 
 To join a password protected wifi network::
 
