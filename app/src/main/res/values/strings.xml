@@ -3,4 +3,7 @@
     <string name="device_admin">ADBJoinWifi Device Admin</string>
 
     <string name="trying_to_connect_to">Trying to connect to:</string>
+    <string name="trying_to_remove">Trying to remove</string>
+    <string name="waiting">Waiting</string>
+    <string name="all">All</string>
 </resources>
