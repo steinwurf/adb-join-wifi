@@ -17,7 +17,7 @@ variable if you choose the latter)::
 
 Alternatively you can also just download the latest release::
 
-   wget https://github.com/steinwurf/adb-join-wifi/releases/download/1.0.1/adb-join-wifi.apk
+   wget https://github.com/laddie132/adb-join-wifi/releases/download/1.0.1-beta/adb-join-wifi.apk
 
 install the app::
 
@@ -28,7 +28,7 @@ parameters:
 
 To join a wifi network with no password::
 
-   adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity
+   adb shell am start -n com.steinwurf.adbjoinwifi/.MainActivity \
         --esn connect -e ssid SSID
 
 To join a password protected wifi network::
